@@ -35,6 +35,7 @@ function sendReply() {
 
   q.thread.push({ role: currentRole, text, ts: new Date().toISOString() });
   save();
+  dbInsertMessage(openQid, currentRole, text); // Supabase (async, optimistic)
   ta.value = '';
 
   renderThreadMessages(q);
@@ -67,6 +68,7 @@ function resolveQ() {
   if (!hasAdm || !hasCli) { toast('Need replies from both Admin and Client first', 'i'); return; }
   q.resolved = true;
   save();
+  dbSetResolved(openQid, true); // Supabase
 
   renderThreadMessages(q);
   renderFooter(q);
@@ -90,6 +92,7 @@ function reopenQ() {
   if (!q) return;
   q.resolved = false;
   save();
+  dbSetResolved(openQid, false); // Supabase
 
   renderThreadMessages(q);
   renderFooter(q);
@@ -115,8 +118,10 @@ function deleteQ() {
   if (!q) return;
   if (!confirm(`Delete "${q.num} — ${q.text.slice(0, 60)}${q.text.length > 60 ? '…' : ''}"?\n\nThis cannot be undone.`)) return;
   const stage = q.stage;
+  const deletedId = openQid; // capture before closeThread() clears it
   questions = questions.filter(x => x.id !== openQid);
   save();
+  dbDeleteQuestion(deletedId); // Supabase (cascade removes messages)
   closeThread();
   renderStage(stage);
   updateGlobal();

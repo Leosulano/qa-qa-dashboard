@@ -29,9 +29,12 @@ function addQuestion() {
   const id     = `q-${stage}-${sq.length + 1}-${Date.now()}`;
   const num    = `Q${stIdx + 1}.${sq.length + 1}*`;
   const thread = msg ? [{ role: currentRole, text: msg, ts: new Date().toISOString() }] : [];
+  const newQ   = { id, stage, num, text, thread, resolved: false };
 
-  questions.push({ id, stage, num, text, thread, resolved: false });
+  questions.push(newQ);
   save();
+  dbInsertQuestion(newQ); // Supabase
+  if (msg) dbInsertMessage(id, currentRole, msg); // Supabase: seed opening message
 
   renderStageBlocks();
   stages.forEach(st => renderStage(st.id));

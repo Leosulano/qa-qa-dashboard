@@ -8,7 +8,9 @@ document.getElementById('stage-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('stage-overlay')) closeStageModal();
 });
 
-// ── BOOT ──────────────────────────────────────────────────────────
+// ── BOOT (async to support Supabase) ─────────────────────────────
 
-loadState();
-renderAll();
+(async function boot() {
+  await loadState();
+  renderAll();
+})();

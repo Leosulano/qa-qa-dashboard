@@ -16,9 +16,13 @@ function addStage() {
   const emoji = document.getElementById('sm-emoji').value.trim() || '📁';
   if (!label) { toast('Please enter a stage name', 'i'); return; }
 
-  const id = 'stage-' + Date.now();
-  stages.push({ id, label, emoji });
+  const id        = 'stage-' + Date.now();
+  const sortOrder = stages.length + 1;
+  const newStage  = { id, label, emoji };
+
+  stages.push(newStage);
   save();
+  dbInsertStage(newStage, sortOrder); // Supabase
   renderSidebar();
   renderStageBlocks();
   updateGlobal();
@@ -40,6 +44,7 @@ function deleteStage(stageId) {
   questions = questions.filter(q => q.stage !== stageId);
   stages    = stages.filter(s => s.id !== stageId);
   save();
+  dbDeleteStage(stageId); // Supabase (cascade removes questions + messages)
   renderSidebar();
   renderStageBlocks();
   stages.forEach(s => renderStage(s.id));
