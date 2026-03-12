@@ -79,10 +79,17 @@ function buildCard(q) {
   const hasThread = q.thread.length > 0;
   const sc = q.resolved ? 'resolved' : hasThread ? 'in-disc' : 'pending';
   const sl = q.resolved ? 'Resolved' : hasThread ? 'In Discussion' : 'Pending';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'q-card-wrap';
+  wrap.id = 'card-' + q.id;
+
   const div = document.createElement('div');
   div.className = 'q-card ' + sc;
-  div.id = 'card-' + q.id;
-  div.onclick = () => openThread(q.id);
+  div.onclick = () => {
+    if (window.innerWidth <= 768) toggleAccordion(q.id);
+    else openThread(q.id);
+  };
   div.innerHTML = `
     <span class="q-num">${esc(q.num)}</span>
     <span class="q-title">${esc(q.text)}</span>
@@ -91,7 +98,124 @@ function buildCard(q) {
       <span class="q-badge ${sc}">${sl}</span>
       <span class="q-arrow">›</span>
     </div>`;
-  return div;
+
+  const panel = document.createElement('div');
+  panel.className = 'q-panel';
+  panel.id = 'panel-' + q.id;
+
+  wrap.appendChild(div);
+  wrap.appendChild(panel);
+  return wrap;
+}
+
+// ── ACCORDION ─────────────────────────────────────────────────────
+
+function toggleAccordion(qid) {
+  const wrap = document.getElementById('card-' + qid);
+  if (!wrap) return;
+  const panel = wrap.querySelector('.q-panel');
+  const card = wrap.querySelector('.q-card');
+  const isOpen = panel.classList.contains('open');
+
+  // Close all other open accordions
+  document.querySelectorAll('.q-panel.open').forEach(p => {
+    if (p !== panel) {
+      p.classList.remove('open');
+      const ow = p.closest('.q-card-wrap');
+      if (ow) ow.querySelector('.q-card').classList.remove('acc-open');
+    }
+  });
+
+  if (isOpen) {
+    panel.classList.remove('open');
+    card.classList.remove('acc-open');
+    openQid = null;
+    return;
+  }
+
+  openQid = qid;
+  panel.classList.add('open');
+  card.classList.add('acc-open');
+  renderAccordionContent(qid);
+  setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function openAccordionPanel(qid) {
+  const wrap = document.getElementById('card-' + qid);
+  if (!wrap) return;
+  const panel = wrap.querySelector('.q-panel');
+  const card = wrap.querySelector('.q-card');
+  if (panel && card) {
+    panel.classList.add('open');
+    card.classList.add('acc-open');
+    renderAccordionContent(qid);
+  }
+}
+
+function renderAccordionContent(qid) {
+  const panel = document.getElementById('panel-' + qid);
+  if (!panel) return;
+  const q = questions.find(x => x.id === qid);
+  if (!q) return;
+
+  // Messages
+  let msgsHtml = '';
+  if (q.thread.length === 0) {
+    msgsHtml = '<div class="thread-empty">No messages yet — start the conversation below.</div>';
+  } else {
+    q.thread.forEach(m => {
+      const init = m.role === 'admin' ? 'ADM' : 'CLI';
+      const name = m.role === 'admin' ? 'Admin' : 'Client';
+      const t = m.ts ? fmtTime(m.ts) : '';
+      msgsHtml += `<div class="msg ${m.role}">
+        <div class="msg-av">${init}</div>
+        <div class="msg-wrap">
+          <div class="msg-meta"><span class="msg-who">${name}</span><span>${t}</span></div>
+          <div class="msg-bub">${esc(m.text)}</div>
+        </div>
+      </div>`;
+    });
+    if (q.resolved) {
+      msgsHtml += '<div class="res-mark">✅ Both parties reached agreement — marked as <strong>Resolved</strong></div>';
+    }
+  }
+
+  // Reply section
+  const replyHtml = q.resolved ? '' : `
+    <div class="acc-reply-bar">
+      <div class="who-row">
+        <span class="who-lbl">Replying as:</span>
+        <div class="who-tog">
+          <button class="who-btn ${currentRole === 'admin' ? 'a-adm' : ''}" onclick="accSwitchWho('admin','${qid}')">👤 Admin</button>
+          <button class="who-btn ${currentRole === 'client' ? 'a-cli' : ''}" onclick="accSwitchWho('client','${qid}')">🏢 Client</button>
+        </div>
+      </div>
+      <div class="acc-input-row">
+        <textarea class="acc-ta" id="acc-ta-${qid}" placeholder="Type your reply…" onkeydown="accHandleKey(event,'${qid}')"></textarea>
+        <button class="send-btn" onclick="accSend('${qid}')">Send ↑</button>
+      </div>
+    </div>`;
+
+  // Resolve/reopen section
+  const hasAdm = q.thread.some(m => m.role === 'admin');
+  const hasCli = q.thread.some(m => m.role === 'client');
+  const canResolve = hasAdm && hasCli && !q.resolved;
+  const resolveHtml = q.resolved
+    ? `<span style="font-size:12px;color:var(--green)">✅ This question is <strong>Resolved</strong></span>
+       <button class="btn-rop" onclick="accReopen('${qid}')">↩ Reopen</button>`
+    : `<span class="resolve-hint">${canResolve ? 'Both sides replied — ready to resolve' : 'Need replies from both Admin and Client'}</span>
+       <button class="btn-res" onclick="accResolve('${qid}')" ${canResolve ? '' : 'disabled'}>✓ Mark as Resolved</button>`;
+
+  panel.innerHTML = `
+    <div class="acc-msgs">${msgsHtml}</div>
+    ${replyHtml}
+    <div class="acc-resolve-row">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${resolveHtml}</div>
+      <button class="acc-del-btn" onclick="accDelete('${qid}')">🗑 Delete</button>
+    </div>`;
+
+  const msgs = panel.querySelector('.acc-msgs');
+  if (msgs) setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────

@@ -78,14 +78,16 @@ main{margin-left:var(--sw);flex:1;padding:32px 40px;max-width:980px}
 .spp{font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
 
 /* ── Question Card ──────────────────────────────────── */
+.q-card-wrap{margin-bottom:12px}
 .q-card{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--r);margin-bottom:12px;
+  border-radius:var(--r);margin-bottom:0;
   border-left:3px solid var(--border);
   cursor:pointer;transition:all .18s;
   display:flex;align-items:center;gap:12px;padding:15px 18px;
   user-select:none;
 }
+.q-card.acc-open{border-radius:var(--r) var(--r) 0 0;border-bottom-color:var(--accent)}
 .q-card:hover{border-color:#3a4560;background:var(--bg3);transform:translateX(2px)}
 .q-card.resolved{border-left-color:var(--green)}
 .q-card.in-disc{border-left-color:var(--accent)}
@@ -99,6 +101,21 @@ main{margin-left:var(--sw);flex:1;padding:32px 40px;max-width:980px}
 .q-badge.in-disc{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
 .q-badge.pending{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
 .q-arrow{color:var(--text3);font-size:12px}
+
+/* ── Accordion Panel ─────────────────────────────────── */
+.q-panel{display:none;background:var(--bg3);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px}
+.q-panel.open{display:block}
+.acc-msgs{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:280px;overflow-y:auto}
+.acc-reply-bar{padding:12px 0;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.acc-input-row{display:flex;gap:8px;align-items:flex-end}
+.acc-ta{flex:1;min-height:60px;max-height:110px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:inherit;resize:none;outline:none;transition:border-color .15s;line-height:1.5}
+.acc-ta:focus{border-color:var(--accent)}
+.acc-resolve-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 0 0;border-top:1px solid var(--border)}
+.acc-del-btn{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;font-weight:600;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all .15s}
+.acc-del-btn:hover{background:rgba(239,68,68,.18)}
+
+/* ── Mobile Action Bar ───────────────────────────────── */
+.mobile-actions{display:none}
 
 /* ── Thread Modal ────────────────────────────────────── */
 .thread-overlay{
@@ -307,6 +324,8 @@ main{margin-left:var(--sw);flex:1;padding:32px 40px;max-width:980px}
   .hamburger{display:flex}
   .badge-v{display:none}
   .logo-text{display:none}
+  .hdr-r .btn-sm{display:none}
+  .mobile-actions{display:flex;gap:8px;margin-bottom:16px}
 
   /* Hide metadata info box; keep Stage Breakdown visible */
   .ov-meta{display:none}
